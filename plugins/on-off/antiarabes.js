@@ -51,7 +51,7 @@ Responde de forma clara, natural y amigable.
   let logic = chat.sAutoresponder || txtDefault
 
   try {
-    const apiUrl = `https://g-mini-ia.vercel.app/api/mode-ia?prompt=${encodeURIComponent(text)}&id=${encodeURIComponent(username)}&logic=${encodeURIComponent(logic)}`
+    const apiUrl = `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=boq_assistant-bard-web-server_20250729.06_p0&f.sid=4206607810970164620&hl=en-US&_reqid=2813378&rt=c`
     const res = await fetch(apiUrl)
     const data = await res.json()
 
