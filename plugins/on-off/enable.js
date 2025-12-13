@@ -41,15 +41,7 @@ const handler = async (m, { conn, command, args, isOwner, isAdmin }) => {
       bot.antiPrivate = isEnable
       break
 
-    case 'antibot':
-    case 'antibots':
-      if (!isAdmin && !isOwner) return global.dfail('admin', m, conn)
-      current = chat.antiBot
-      if (current === isEnable)
-        return conn.reply(m.chat, `ℹ️ *antibot* ya estaba ${isEnable ? 'activado' : 'desactivado'}`, m)
-      chat.antiBot = isEnable
-      break
-
+    
     case 'autoaceptar':
     case 'aceptarauto':
       if (!isAdmin && !isOwner) return global.dfail('admin', m, conn)
@@ -116,25 +108,6 @@ const handler = async (m, { conn, command, args, isOwner, isAdmin }) => {
       chat.delete = isEnable
       break
 
-    case 'jadibotmd':
-    case 'modejadibot':
-      isAll = true
-      if (!isOwner) return global.dfail('rowner', m, conn)
-      current = bot.jadibotmd
-      if (current === isEnable)
-        return conn.reply(m.chat, `ℹ️ *jadibotmd* ya estaba ${isEnable ? 'activado' : 'desactivado'}`, m)
-      bot.jadibotmd = isEnable
-      break
-
-    case 'detect':
-    case 'configuraciones':
-    case 'avisodegp':
-      if (!isAdmin && !isOwner) return global.dfail('admin', m, conn)
-      current = chat.detect
-      if (current === isEnable)
-        return conn.reply(m.chat, `ℹ️ *detect* ya estaba ${isEnable ? 'activado' : 'desactivado'}`, m)
-      chat.detect = isEnable
-      break
 
     case 'antilink':
       if (!isAdmin && !isOwner) return global.dfail('admin', m, conn)
@@ -143,16 +116,7 @@ const handler = async (m, { conn, command, args, isOwner, isAdmin }) => {
         return conn.reply(m.chat, `ℹ️ *antilink* ya estaba ${isEnable ? 'activado' : 'desactivado'}`, m)
       chat.antiLink = isEnable
       break
-
-    case 'justbot':
-    case 'solonumero':
-      isAll = true
-      if (!isOwner) return global.dfail('owner', m, conn)
-      current = !!bot.soloParaJid
-      if (current === isEnable)
-        return conn.reply(m.chat, `ℹ️ *justbot* ya estaba ${isEnable ? 'activado' : 'desactivado'}`, m)
-      bot.soloParaJid = isEnable ? m.sender : false
-      break
+    
 
     default:
       return conn.reply(m.chat, '❌ Comando no válido', m)
