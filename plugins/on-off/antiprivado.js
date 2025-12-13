@@ -8,7 +8,7 @@ async function getFKontak() {
 
   if (!cachedImg) {
     try {
-      const res = await fetch('https://files.catbox.moe/igdrbi.jpg')
+      const res = await fetch('https://cdn.russellxz.click/28a8569f.jpeg')
       cachedImg = Buffer.from(await res.arrayBuffer())
     } catch {
       cachedImg = Buffer.alloc(0)
