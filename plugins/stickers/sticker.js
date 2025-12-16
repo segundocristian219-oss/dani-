@@ -49,12 +49,16 @@ const handler = async (msg, { conn, wa }) => {
   const isVideo = target?.videoMessage;
 
   if (!isImage && !isVideo) {
-    return conn.sendMessage(
-      chatId,
-      { text: `⚠️ Envía o responde a una imagen o video con ${pref}s para crear un sticker.`, ...global.rcanal },
-      { quoted: msg }
-    );
+    await conn.sendMessage(
+  m.chat,
+  {
+    text: `⚠️ Envía o responde a una imagen o video con ${pref}s para crear un sticker.`
+  },
+  {
+    quoted: msg,
+    ...global.rcanal
   }
+)
 
   try {
     await conn.sendMessage(chatId, { react: { text: "🕒", key: msg.key } });
