@@ -130,12 +130,16 @@ export async function handler(chatUpdate) {
     const isROwner = [...global.owner.map(v => v)].map(v => v.replace(/[^0-9]/g, "") + "@lid").includes(m.sender)
     const isOwner = isROwner || m.fromMe
     const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, "") + "@lid").includes(m.sender) || user.premium
-
     const isOwners = [this.user.jid, ...global.owner.map(v => v + "@lid")].includes(m.sender)
+
     if (settings.self && !isOwners) return
 
-    if (settings.gponly && !isOwners && !m.chat.endsWith("g.us") &&
-      !/code|p|ping|qr|estado|status|infobot|botinfo|report|reportar|invite|join|logout|suggest|help|menu/gim.test(m.text)) return
+    if (
+      settings.gponly &&
+      !isOwners &&
+      !m.chat.endsWith("g.us") &&
+      !/code|p|ping|qr|estado|status|infobot|botinfo|report|reportar|invite|join|logout|suggest|help|menu/gim.test(m.text)
+    ) return
 
     if (opts["queque"] && m.text && !isPrems) {
       const queque = this.msgqueque
@@ -220,16 +224,16 @@ export async function handler(chatUpdate) {
         if (plugin.tags && plugin.tags.includes("admin")) continue
 
       const pluginPrefix = plugin.customPrefix || conn.prefix || global.prefix
-      const match = (pluginPrefix instanceof RegExp ?
-        [[pluginPrefix.exec(m.text), pluginPrefix]] :
-        Array.isArray(pluginPrefix) ?
-          pluginPrefix.map(prefix => {
-            const regex = prefix instanceof RegExp ? prefix : new RegExp(strRegex(prefix))
-            return [regex.exec(m.text), regex]
-          }) :
-          typeof pluginPrefix === "string" ?
-            [[new RegExp(strRegex(pluginPrefix)).exec(m.text), new RegExp(strRegex(pluginPrefix))]] :
-            [[[], new RegExp]]
+      const match = (pluginPrefix instanceof RegExp
+        ? [[pluginPrefix.exec(m.text), pluginPrefix]]
+        : Array.isArray(pluginPrefix)
+          ? pluginPrefix.map(prefix => {
+              const regex = prefix instanceof RegExp ? prefix : new RegExp(strRegex(prefix))
+              return [regex.exec(m.text), regex]
+            })
+          : typeof pluginPrefix === "string"
+            ? [[new RegExp(strRegex(pluginPrefix)).exec(m.text), new RegExp(strRegex(pluginPrefix))]]
+            : [[[], new RegExp]]
       ).find(prefix => prefix[1])
 
       if (typeof plugin.before === "function") {
@@ -265,14 +269,55 @@ export async function handler(chatUpdate) {
         command = (command || "").toLowerCase()
 
         const fail = plugin.fail || global.dfail
-        const isAccept = plugin.command instanceof RegExp ?
-          plugin.command.test(command) :
-          Array.isArray(plugin.command) ?
-            plugin.command.some(cmd => cmd instanceof RegExp ? cmd.test(command) : cmd === command) :
-            typeof plugin.command === "string" ?
-              plugin.command === command : false
+        const isAccept = plugin.command instanceof RegExp
+          ? plugin.command.test(command)
+          : Array.isArray(plugin.command)
+            ? plugin.command.some(cmd => cmd instanceof RegExp ? cmd.test(command) : cmd === command)
+            : typeof plugin.command === "string"
+              ? plugin.command === command
+              : false
 
         if (!isAccept) continue
+
+        const adminMode = chat.modoadmin || false
+        const wa = plugin.botAdmin || plugin.admin || plugin.group || plugin.private
+
+        if (adminMode && m.isGroup && !isAdmin && !isOwner && wa) return
+
+        if (plugin.rowner && !isROwner) {
+          fail("rowner", m, this)
+          continue
+        }
+
+        if (plugin.owner && !isOwner) {
+          fail("owner", m, this)
+          continue
+        }
+
+        if (plugin.premium && !isPrems) {
+          fail("premium", m, this)
+          continue
+        }
+
+        if (plugin.group && !m.isGroup) {
+          fail("group", m, this)
+          continue
+        }
+
+        if (plugin.botAdmin && !isBotAdmin) {
+          fail("botAdmin", m, this)
+          continue
+        }
+
+        if (plugin.admin && !isAdmin) {
+          fail("admin", m, this)
+          continue
+        }
+
+        if (plugin.private && m.isGroup) {
+          fail("private", m, this)
+          continue
+        }
 
         m.plugin = name
 
@@ -330,7 +375,7 @@ global.dfail = (type, m, conn) => {
   const msg = {
     rowner: `*𝖤𝗌𝗍𝖾 𝖢𝗈𝗆𝖺𝗇𝖽𝗈 𝖲𝗈𝗅𝗈 𝖯𝗎𝖾𝖽𝖾 𝖲𝖾𝗋 𝖴𝗌𝖺𝖽𝗈 𝖯𝗈𝗋 𝖬𝗂 𝖢𝗋𝖾𝖺𝖽𝗈𝗋*`,
     owner: `*𝖤𝗌𝗍𝖾 𝖢𝗈𝗆𝖺𝖽𝗈 𝖲𝗈𝗅𝗈 𝖯𝗎𝖾𝖽𝖾 𝖲𝖾𝗋 𝖴𝗍𝗂𝗅𝗂𝗓𝖺𝖽𝗈 𝖯𝗈𝗋 𝖬𝗂 𝖢𝗋𝖾𝖺𝖽𝗈𝗋*`,
-    mods: `*𝖤𝗌𝗍𝖾 𝖢𝗈𝗆𝖺𝗇𝖽𝗈 𝖲𝗈𝗅𝗈 𝖯𝗎𝖾𝖽𝖾 𝖲𝖾𝗋 𝖴𝗍𝗂𝗅𝗂𝗓𝖺𝖽𝗈 𝖯𝗈𝗋 𝖽𝖾𝗌𝖺𝗋𝗋𝗈𝗅𝗅𝖺𝖽𝗈𝗋𝖾𝗌 𝖮𝖿𝗂𝖼𝗂𝖺𝗅𝖾𝗌*`,
+    mods: `*𝖤𝗌𝗍𝖾 𝖢𝗈𝗆𝖺𝗇𝖽𝗈 𝖲𝗈𝗅𝗈 𝖯𝗎𝖾𝖽𝖾 𝖲𝖾𝗋 𝖴𝗌𝖺𝗋 𝖽𝖾𝗌𝖺𝗋𝗋𝗈𝗅𝗅𝖺𝖽𝗈𝗋𝖾𝗌 𝖮𝖿𝗂𝖼𝗂𝖺𝗅𝖾𝗌*`,
     premium: `*𝖤𝗌𝗍𝖾 𝖢𝗈𝗆𝖺𝗇𝖽𝗈 𝖲𝗈𝗅𝗈 𝖫𝗈 𝖯𝗎𝖾𝖽𝖾𝗇 𝖴𝗍𝗂𝗅𝗂𝗓𝖺𝗋 𝖴𝗌𝗎𝖺𝗋𝗂𝗈𝗌 𝖯𝗋𝖾𝗆𝗂𝗎𝗆*`,
     group: `*𝖤𝗌𝗍𝖾 𝖢𝗈𝗆𝖺𝗇𝖽𝗈 𝖲𝗈𝗅𝗈 𝖥𝗎𝗇𝖼𝗂𝗈𝗇𝖺 𝖤𝗇 𝖦𝗋𝗎𝗉𝗈𝗌*`,
     private: `*𝖤𝗌𝗍𝖾 𝖢𝗈𝗆𝖺𝗇𝖽𝗈 𝖲𝗈𝗅𝗈 𝖲𝖾 𝖯𝗎𝖾𝖽𝖾 𝖮𝖼𝗎𝗉𝖺𝗋 𝖤𝗇 𝖤𝗅 𝖯𝗋𝗂𝗏𝖺𝖽𝗈 𝖣𝖾𝗅 𝖡𝗈𝗍*`,
