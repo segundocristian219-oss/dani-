@@ -276,44 +276,44 @@ export async function handler(chatUpdate) {
         if (!isAccept) continue
 
         const adminMode = chat.modoadmin || false
-        const wa = plugin.botAdmin || plugin.admin || plugin.group || plugin.private
+const wa = plugin.botAdmin || plugin.admin || plugin.group || plugin.private
 
-        if (adminMode && m.isGroup && !isAdmin && !isOwner && wa) return
+if (adminMode && m.isGroup && !isAdmin && !isOwner && wa) return
 
-        if (plugin.rowner && !isROwner) {
-          fail("rowner", m, this)
-          continue
-        }
+if (plugin.rowner && !isROwner) {
+  fail("rowner", m, this)
+  continue
+}
 
-        if (plugin.owner && !isOwner) {
-          fail("owner", m, this)
-          continue
-        }
+if (plugin.owner && !isOwner) {
+  fail("owner", m, this)
+  continue
+}
 
-        if (plugin.premium && !isPrems) {
-          fail("premium", m, this)
-          continue
-        }
+if (plugin.premium && !isPrems) {
+  fail("premium", m, this)
+  continue
+}
 
-        if (plugin.group && !m.isGroup) {
-          fail("group", m, this)
-          continue
-        }
+if (plugin.group && !m.isGroup) {
+  fail("group", m, this)
+  continue
+}
 
-        if (plugin.botAdmin && !isBotAdmin) {
-          fail("botAdmin", m, this)
-          continue
-        }
+if (plugin.botAdmin && !isBotAdmin) {
+  fail("botAdmin", m, this)
+  continue
+}
 
-        if (plugin.admin && !isAdmin) {
-          fail("admin", m, this)
-          continue
-        }
+if (plugin.admin && !isAdmin) {
+  fail("admin", m, this)
+  continue
+}
 
-        if (plugin.private && m.isGroup) {
-          fail("private", m, this)
-          continue
-        }
+if (plugin.private && m.isGroup) {
+  fail("private", m, this)
+  continue
+}
 
         m.plugin = name
 
