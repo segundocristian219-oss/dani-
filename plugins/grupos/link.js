@@ -1,12 +1,12 @@
 const handler = async (m, { conn }) => {
   const chat = m.chat;
 
-  conn.sendMessage(chat, {
+  // Reacción inicial
+  await conn.sendMessage(chat, {
     react: { text: "🔗", key: m.key }
   });
 
   try {
-
     const safeFetch = async (url, timeout = 5000) => {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), timeout);
@@ -20,6 +20,7 @@ const handler = async (m, { conn }) => {
       }
     };
 
+    // Obtener metadata del grupo y código de invitación
     const [meta, code] = await Promise.all([
       conn.groupMetadata(chat),
       conn.groupInviteCode(chat).catch(() => null)
@@ -33,9 +34,9 @@ const handler = async (m, { conn }) => {
     const fallback = "https://files.catbox.moe/xr2m6u.jpg";
     let ppBuffer = null;
 
+    // Obtener foto del grupo
     try {
       const url = await conn.profilePictureUrl(chat, "image").catch(() => null);
-
       if (url && url !== "not-authorized" && url !== "not-exist") {
         ppBuffer = await safeFetch(url, 6000);
       }
@@ -43,23 +44,29 @@ const handler = async (m, { conn }) => {
       console.warn("Error obteniendo foto del grupo:", e);
     }
 
-    if (!ppBuffer) {
-      ppBuffer = await safeFetch(fallback);
-    }
+    if (!ppBuffer) ppBuffer = await safeFetch(fallback);
 
+    // Enviar mensaje con botón que abre el link del grupo
     await conn.sendMessage(
       chat,
       {
         image: ppBuffer,
-        caption: `*${groupName}*\n${link}`
+        caption: `*${groupName}*\n${link}`,
+        templateButtons: [
+          {
+            urlButton: {
+              displayText: "COPIAR LINK",
+              url: link // Al tocar abre el enlace directamente
+            }
+          }
+        ]
       },
       { quoted: m }
     );
 
   } catch (err) {
     console.error("⚠️ Error en comando .link:", err);
-
-    conn.sendMessage(chat, {
+    await conn.sendMessage(chat, {
       text: "❌ Ocurrió un error al generar el enlace."
     }, { quoted: m });
   }
