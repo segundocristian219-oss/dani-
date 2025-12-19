@@ -46,20 +46,20 @@ const handler = async (m, { conn }) => {
 
     if (!ppBuffer) ppBuffer = await safeFetch(fallback);
 
-    // Enviar mensaje con botón que abre el link del grupo
+    // Enviar mensaje con botón
     await conn.sendMessage(
       chat,
       {
         image: ppBuffer,
         caption: `*${groupName}*\n${link}`,
-        templateButtons: [
+        buttons: [
           {
-            urlButton: {
-              displayText: "COPIAR LINK",
-              url: link // Al tocar abre el enlace directamente
-            }
+            buttonId: `copy_link`,
+            buttonText: { displayText: `COPIAR LINK` },
+            type: 1
           }
-        ]
+        ],
+        headerType: 4
       },
       { quoted: m }
     );
@@ -72,10 +72,11 @@ const handler = async (m, { conn }) => {
   }
 };
 
-handler.help = ["𝖫𝗂𝗇𝗄"];
-handler.tags = ["𝖦𝖱𝖴𝖯𝖮𝖲"];
+handler.help = ["link"];
+handler.tags = ["grupos"];
 handler.customPrefix = /^\.?(link)$/i;
 handler.command = new RegExp();
 handler.group = true;
 handler.admin = true;
+
 export default handler;
