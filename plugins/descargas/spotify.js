@@ -1,114 +1,154 @@
-"use strict";
+import axios from 'axios'
+import { wrapper } from 'axios-cookiejar-support'
+import { CookieJar } from 'tough-cookie'
+import * as cheerio from 'cheerio'
 
-import axios from "axios";
-import fetch from "node-fetch";
+const jar = new CookieJar()
+const client = wrapper(axios.create({ jar }))
 
-const API_BASE = (process.env.API_BASE || "https://api-sky.ultraplus.click").replace(/\/+$/, "");
-const API_KEY = process.env.API_KEY || "Angxllll";
-const MAX_TIMEOUT = 30000;
-
-let thumb = null;
-fetch("https://cdn.russellxz.click/28a8569f.jpeg")
-  .then(r => r.arrayBuffer())
-  .then(b => thumb = Buffer.from(b))
-  .catch(() => null);
-
-async function getSpotifyMp3(input) {
-  const endpoint = `${API_BASE}/spotify`;
-  const isUrl = /spotify\.com/i.test(input);
-  const body = isUrl ? { url: input } : { query: input };
-
-  const { data, status } = await axios.post(
-    endpoint,
-    body,
-    {
-      headers: {
-        apikey: API_KEY,
-        Authorization: `Bearer ${API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      timeout: MAX_TIMEOUT,
-      validateStatus: () => true
-    }
-  );
-
-  let res = data;
-  if (typeof res === "string") {
-    try { res = JSON.parse(res.trim()); } catch { throw new Error("Respuesta inválida"); }
-  }
-
-  const ok = res?.status === true || res?.status === "true";
-  if (!ok) throw new Error(res?.message || res?.error || `HTTP ${status}`);
-
-  const mp3Url = res?.result?.media?.audio;
-  if (!mp3Url) throw new Error("MP3 no disponible");
-
-  return {
-    mp3Url,
-    title: res?.result?.title || "Spotify",
-    artist: res?.result?.artist || "Desconocido"
-  };
+const BASE_URL = 'https://spotmate.online'
+const HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+  Accept: 'application/json, text/plain, */*',
+  Referer: 'https://spotmate.online/en1',
+  Origin: 'https://spotmate.online'
 }
 
-const handler = async (m, { conn, args }) => {
-  const text = (args.join(" ") || "").trim();
-  if (!text) {
-    return conn.sendMessage(
-      m.chat,
-      { text: "✳️ Usa:\n.sp <canción o URL>" },
-      { quoted: m }
-    );
-  }
+async function scrapeSpotify(spotifyUrl) {
+  try {
+    const homeResponse = await client.get(`${BASE_URL}/en1`, {
+      headers: HEADERS
+    })
 
-  await conn.sendMessage(m.chat, {
-    react: { text: "🕒", key: m.key }
-  });
+    const $ = cheerio.load(homeResponse.data)
+    const csrfToken = $('meta[name="csrf-token"]').attr('content')
 
-  const fkontak = {
-    key: {
-      participants: "0@s.whatsapp.net",
-      remoteJid: "status@broadcast",
-      fromMe: false,
-      id: "Angel"
-    },
-    message: {
-      locationMessage: {
-        name: "𝖧𝗈𝗅𝖺, 𝖲𝗈𝗒 𝖠𝗇𝗀𝖾𝗅 𝖡𝗈𝗍",
-        jpegThumbnail: thumb
+    if (!csrfToken) throw new Error('Could not find CSRF token')
+
+    const apiHeaders = {
+      ...HEADERS,
+      'X-CSRF-TOKEN': csrfToken,
+      'Content-Type': 'application/json'
+    }
+
+    const metaPayload = { spotify_url: spotifyUrl }
+    const metaResponse = await client.post(`${BASE_URL}/getTrackData`, metaPayload, {
+      headers: apiHeaders
+    })
+
+    const meta = metaResponse.data
+
+    let name = 'Unknown'
+    let cover = ''
+    if (meta) {
+      if (meta.name) {
+        const artist =
+          meta.artists && meta.artists.length > 0 ? meta.artists[0].name : ''
+        name = artist ? `${meta.name} - ${artist}` : meta.name
       }
-    },
-    participant: "0@s.whatsapp.net"
-  };
+      cover = meta.album?.images?.[0]?.url || ''
+    }
+
+    const convertPayload = { urls: spotifyUrl }
+    const convertResponse = await client.post(`${BASE_URL}/convert`, convertPayload, {
+      headers: apiHeaders
+    })
+
+    const convertData = convertResponse.data
+
+    if (convertData.status === 'queued' && convertData.task_id) {
+      const taskId = convertData.task_id
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 2000))
+        try {
+          const checkRes = await client.post(
+            `${BASE_URL}/status`,
+            { taskId },
+            { headers: apiHeaders }
+          )
+          const checkData = checkRes.data
+          if (checkData.status === 'success' || checkData.status === 'finished') {
+            const dl = checkData.download || checkData.url || checkData.result
+            if (dl) return { name, cover, path: dl }
+          }
+        } catch {}
+      }
+      return { error: 'Timeout waiting for conversion' }
+    }
+
+    if (!convertData || convertData.error)
+      return { error: 'Conversion failed', detail: convertData }
+
+    return {
+      name,
+      cover,
+      path: convertData.url || convertData.download
+    }
+  } catch (error) {
+    return { error: error.message }
+  }
+}
+
+let handler = async (m, { conn, args, text, usedPrefix, command }) => {
+
+  // 🔥 detección de texto tipo .wm
+  const quotedText =
+    m.quoted?.text ||
+    m.quoted?.caption ||
+    m.quoted?.conversation ||
+    ''
+
+  const inputText = args?.join(' ').trim()
+  const url = String(inputText || quotedText || '').trim()
+
+  if (!url)
+    return m.reply(`Uso: ${usedPrefix + command} <link de spotify>`)
+
+  if (!/spotify\.com/.test(url))
+    return m.reply('❌ Link inválido. Solo se soportan links de Spotify.')
+
+  await m.react('⏳').catch(() => {})
 
   try {
-    const { mp3Url, title, artist } = await getSpotifyMp3(text);
+    const result = await scrapeSpotify(url)
+
+    if (result.error || !result.path) {
+      await m.react('✖️').catch(() => {})
+      return m.reply(`Error descargando canción: ${result.error || 'Desconocido'}`)
+    }
+
+    const contextInfo = {
+      externalAdReply: {
+        title: result.name,
+        body: 'Spotify Downloader',
+        thumbnailUrl: result.cover || undefined,
+        sourceUrl: url,
+        mediaType: 1,
+        renderLargerThumbnail: true
+      }
+    }
 
     await conn.sendMessage(
       m.chat,
       {
-        audio: { url: mp3Url },
-        mimetype: "audio/mpeg",
-        fileName: `${title} - ${artist}.mp3`,
-        caption: `🎵 ${title}\n👤 ${artist}`
+        audio: { url: result.path },
+        mimetype: 'audio/mpeg',
+        contextInfo
       },
-      { quoted: fkontak }
-    );
+      { quoted: m }
+    )
 
-    await conn.sendMessage(m.chat, {
-      react: { text: "✅", key: m.key }
-    });
-
+    await m.react('✅').catch(() => {})
   } catch (e) {
-    let msg = "❌ Error al descargar desde Spotify";
-    if (/api key|unauthorized|401/i.test(e?.message)) msg = "🔐 API Key inválida";
-    else if (/timeout|502|upstream/i.test(e?.message)) msg = "⚠️ Error del servidor";
-
-    await conn.sendMessage(m.chat, { text: msg }, { quoted: m });
+    console.error(e)
+    await m.react('✖️').catch(() => {})
+    m.reply(`Error: ${e.message || e}`)
   }
-};
+}
 
-handler.command = ["spotify", "sp"];
-handler.help = ["spotify <canción o url>"];
-handler.tags = ["descargas"];
+handler.help = ['spotify <url>']
+handler.tags = ['dl']
+handler.command = ['spotify', 'sp']
 
-export default handler;
+export default handler
