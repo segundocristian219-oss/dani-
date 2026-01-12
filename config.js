@@ -14,10 +14,10 @@ global.prems = []
 
 global.emoji = '📎'
 global.emoji2 = '🏞️'
-global.namebot = '𝐏𝐀𝐓𝐎 𝐁𝐎𝐓'
-global.botname = '𝐏𝐀𝐓𝐎 𝐁𝐎𝐓'
-global.banner = 'https://cdn.russellxz.click/d479223a.jpeg'
-global.packname = '𝐏𝐀𝐓𝐎 𝐁𝐎𝐓'
+global.namebot = '𝐅𝐎𝐗 𝐁𝐀𝐋𝐀 𝐁𝐎𝐓'
+global.botname = '𝐅𝐎𝐗 𝐁𝐀𝐋𝐀 𝐁𝐎𝐓'
+global.banner = 'https://files.catbox.moe/8l7wr2.jpg'
+global.packname = '𝐅𝐎𝐗 𝐁𝐀𝐋𝐀 𝐁𝐎𝐓'
 global.author = '𝖣𝖾𝗌𝖺𝗋o𝗅𝗅𝖺𝖽𝗈 𝗉𝗈𝗋 𝐇𝐄𝐑𝐍𝐀𝐍𝐃𝐄𝐙'
 global.sessions = '𝐏𝐀𝐓𝐎 𝐁𝐎𝐓'
 
