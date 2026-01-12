@@ -23,7 +23,7 @@ import path, { join, dirname } from 'path'
 import { Boom } from '@hapi/boom'
 import { makeWASocket, protoType, serialize } from './lib/simple.js'
 import { Low, JSONFile } from 'lowdb'
-import { mongoDB, mongoDBV2 } from './lib/mongoDB.js'
+import MongoDB from './lib/mongoDB.js'
 import store from './lib/store.js'
 const { proto } = (await import('@whiskeysockets/baileys')).default
 import pkg from 'google-libphonenumber'
@@ -332,9 +332,7 @@ async function connectionUpdate(update) {
         console.error("❌ Error leyendo lastRestarter.json:", error)
       }
     }
-  }
-
-  let reason = new Boom(lastDisconnect?.error)?.output?.statusCode
+  }let reason = new Boom(lastDisconnect?.error)?.output?.statusCode
   if (connection === 'close') {
     if (reason === DisconnectReason.badSession) {
       console.log(chalk.bold.cyanBright(`\n⚠︎ Sin conexión, borra la session principal del Bot, y conectate nuevamente.`))
@@ -401,7 +399,6 @@ conn.ev.on('creds.update', conn.credsUpdate)
 isInit = false
 return true
 }
-
 const pluginRoot = join(__dirname, "./plugins/");
 const pluginFilter = (filename) => filename.endsWith(".js");
 
@@ -537,4 +534,41 @@ console.log(chalk.bold.red(`\n⚠︎ El archivo ${file} no se logró borrar.\n` 
 console.log(chalk.bold.green(`\n⌦ El archivo ${file} se ha borrado correctamente.`))
 } }) }
 }) }) }) }
-function redefineConsoleMethod(methodName, filterS
+function redefineConsoleMethod(methodName, filterStrings) {
+const originalConsoleMethod = console[methodName]
+console[methodName] = function() {
+const message = arguments[0]
+if (typeof message === 'string' && filterStrings.some(filterString => message.includes(atob(filterString)))) {
+arguments[0] = ""
+}
+originalConsoleMethod.apply(console, arguments)
+}}
+setInterval(async () => {
+if (stopped === 'close' || !conn || !conn.user) return
+await clearTmp()
+console.log(chalk.bold.cyanBright(`\n⌦ Archivos de la carpeta TMP no necesarios han sido eliminados del servidor.`))}, 1000 * 60 * 4)
+setInterval(async () => {
+if (stopped === 'close' || !conn || !conn.user) return
+await purgeSession()
+console.log(chalk.bold.cyanBright(`\n⌦ Archivos de la carpeta ${global.sessions} no necesario han sido eliminados del servidor.`))}, 1000 * 60 * 10)
+setInterval(async () => {
+if (stopped === 'close' || !conn || !conn.user) return
+await purgeSessionSB()}, 1000 * 60 * 10) 
+setInterval(async () => {
+if (stopped === 'close' || !conn || !conn.user) return
+await purgeOldFiles()
+console.log(chalk.bold.cyanBright(`\n⌦ Archivos no necesario han sido eliminados del servidor.`))}, 1000 * 60 * 10)
+_quickTest().catch(console.error)
+async function isValidPhoneNumber(number) {
+try {
+number = number.replace(/\s+/g, '')
+if (number.startsWith('+521')) {
+number = number.replace('+521', '+52');
+} else if (number.startsWith('+52') && number[4] === '1') {
+number = number.replace('+52 1', '+52');
+}
+const parsedNumber = phoneUtil.parseAndKeepRawInput(number)
+return phoneUtil.isValidNumber(parsedNumber)
+} catch (error) {
+return false
+}}
