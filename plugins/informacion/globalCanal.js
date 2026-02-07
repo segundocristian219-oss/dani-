@@ -3,7 +3,7 @@ import path from 'path'
 
 export async function before(m, { conn }) {
   try {
-    const nombreBot = global.namebot || '𝐅𝐎𝐗 𝐁𝐀𝐋𝐀 𝐁𝐎𝐓'
+    const nombreBot = global.namebot || '𝐃𝐗𝐍𝐍𝐘.𝐁𝐎𝐓'
     const bannerFinal = 'https://files.catbox.moe/k8k9ha.jpg'
 
     const canales = [global.idcanal, global.idcanal2].filter(Boolean)
