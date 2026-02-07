@@ -1,4 +1,4 @@
-2process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1'
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1'
 import './config.js'
 import cluster from 'cluster'
 import { watchFile, unwatchFile } from 'fs'
@@ -324,7 +324,7 @@ async function connectionUpdate(update) {
       try {
         const data = JSON.parse(fs.readFileSync(restarterFile, "utf-8"))
         if (data.chatId) {
-          await conn.sendMessage(data.chatId, { text: "✅ *𝐃𝐗𝐍𝐍𝐘𝐁𝐎𝐓 está en línea nuevamente* 🚀" })
+          await conn.sendMessage(data.chatId, { text: "✅ *𝐅𝐎𝐗 𝐁𝐀𝐋𝐀 𝐁𝐎𝐓 está en línea nuevamente* 🚀" })
           console.log(chalk.yellow("📢 Aviso enviado al grupo del reinicio."))
           fs.unlinkSync(restarterFile)
         }
