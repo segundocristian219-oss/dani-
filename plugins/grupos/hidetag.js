@@ -64,7 +64,7 @@ const handler = async (m, { conn, participants }) => {
                     }, { quoted: fkontak })
                 }
             } else {
-                if (mtype === 'imageMessage') await conn.sendMessage(m.chat, { image: media, caption: `${finalCaption}\n\n> Angel bot 🧟`, mentions: users }, { quoted: fkontak })
+                if (mtype === 'imageMessage') await conn.sendMessage(m.chat, { image: media, caption: `${finalCaption}\n\n> 𝐃𝐗𝐍𝐍𝐘 𝐁𝐎𝐓 🧟`, mentions: users }, { quoted: fkontak })
                 if (mtype === 'videoMessage') await conn.sendMessage(m.chat, { video: media, caption: `${finalCaption}\n\n> 𝐃𝐗𝐍𝐍𝐘 𝐁𝐎𝐓 🧟`, mentions: users, mimetype: 'video/mp4' }, { quoted: fkontak })
                 if (mtype === 'stickerMessage') await conn.sendMessage(m.chat, { sticker: media, mentions: users }, { quoted: fkontak })
             }
