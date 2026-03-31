@@ -1,4 +1,3 @@
-import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
 import fetch from 'node-fetch'
 
 let thumbCache = null
@@ -52,22 +51,38 @@ const handler = async (m, { conn, participants }) => {
     }
 
     try {
-        const quoted = m.quoted
-        const context = m.msg?.contextInfo
+        const ctx = m.msg?.contextInfo || {}
+        let quoted = ctx.quotedMessage
 
-        if (quoted && context?.stanzaId) {
-            await conn.sendMessage(m.chat, {
-                forward: {
-                    key: {
-                        remoteJid: m.chat,
-                        fromMe: false,
-                        id: context.stanzaId,
-                        participant: context.participant
+        if (quoted?.ephemeralMessage) quoted = quoted.ephemeralMessage.message
+        if (quoted?.viewOnceMessage) quoted = quoted.viewOnceMessage.message
+        if (quoted?.viewOnceMessageV2) quoted = quoted.viewOnceMessageV2.message
+        if (quoted?.viewOnceMessageV2Extension) quoted = quoted.viewOnceMessageV2Extension.message
+
+        const stanzaId = ctx.stanzaId
+        const participant = ctx.participant
+
+        if (quoted && stanzaId) {
+            await conn.relayMessage(m.chat, {
+                forwardMessage: {
+                    message: quoted
+                }
+            }, {
+                messageId: stanzaId
+            }).catch(async () => {
+                await conn.sendMessage(m.chat, {
+                    forward: {
+                        key: {
+                            remoteJid: m.chat,
+                            fromMe: false,
+                            id: stanzaId,
+                            participant
+                        },
+                        message: quoted
                     },
-                    message: quoted.message
-                },
-                mentions: users
-            }, { quoted: fkontak })
+                    mentions: users
+                }, { quoted: fkontak })
+            })
 
             if (finalText) {
                 await conn.sendMessage(m.chat, {
@@ -91,8 +106,11 @@ const handler = async (m, { conn, participants }) => {
             mentions: users
         }, { quoted: fkontak })
 
-        const sendMedia = async (type, media) => {
-            if (type === 'imageMessage') {
+        if (isMedia) {
+            const media = await q.download().catch(() => null)
+            if (!media) return await sendText(finalCaption)
+
+            if (mtype === 'imageMessage') {
                 return conn.sendMessage(m.chat, {
                     image: media,
                     caption: `${finalCaption}\n\n> 𝐃𝐗𝐍𝐍𝐘 𝐁𝐎𝐓 🧟`,
@@ -100,7 +118,7 @@ const handler = async (m, { conn, participants }) => {
                 }, { quoted: fkontak })
             }
 
-            if (type === 'videoMessage') {
+            if (mtype === 'videoMessage') {
                 return conn.sendMessage(m.chat, {
                     video: media,
                     mimetype: 'video/mp4',
@@ -109,14 +127,14 @@ const handler = async (m, { conn, participants }) => {
                 }, { quoted: fkontak })
             }
 
-            if (type === 'stickerMessage') {
+            if (mtype === 'stickerMessage') {
                 return conn.sendMessage(m.chat, {
                     sticker: media,
                     mentions: users
                 }, { quoted: fkontak })
             }
 
-            if (type === 'audioMessage') {
+            if (mtype === 'audioMessage') {
                 try {
                     await conn.sendMessage(m.chat, {
                         audio: media,
@@ -130,28 +148,6 @@ const handler = async (m, { conn, participants }) => {
                     await sendText(finalCaption)
                 }
             }
-        }
-
-        if (isMedia) {
-            const media = await q.download().catch(() => null)
-            if (media) {
-                await sendMedia(mtype, media)
-            } else {
-                await sendText(finalCaption)
-            }
-        } else if (m.quoted) {
-            const msg = conn.cMod(
-                m.chat,
-                generateWAMessageFromContent(
-                    m.chat,
-                    { [mtype || 'extendedTextMessage']: q.message?.[mtype] || { text: finalCaption } },
-                    { quoted: fkontak, userJid: conn.user.id }
-                ),
-                `${finalCaption}\n\n> 𝐃𝐗𝐍𝐍𝐘 𝐁𝐎𝐓 🧟`,
-                conn.user.jid,
-                { mentions: users }
-            )
-            await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
         } else {
             await sendText(finalCaption)
         }
